@@ -375,6 +375,10 @@ export class OpenClawApp extends LitElement {
   @state() logsLimit = 500;
   @state() logsMaxBytes = 250_000;
   @state() logsAtBottom = true;
+  @state() dashboardData: import("./views/dashboard.js").DashboardData | null = null;
+  @state() dashboardLoading = false;
+  @state() dashboardError: string | null = null;
+  @state() dashboardSelectedProjectId: string | null = null;
 
   client: GatewayBrowserClient | null = null;
   private chatScrollFrame: number | null = null;
@@ -475,6 +479,43 @@ export class OpenClawApp extends LitElement {
 
   async loadOverview() {
     await loadOverviewInternal(this as unknown as Parameters<typeof loadOverviewInternal>[0]);
+  }
+
+  async loadDashboard() {
+    this.dashboardLoading = true;
+    this.dashboardError = null;
+    try {
+      const { loadDashboard } = await import("./controllers/dashboard.js");
+      this.dashboardData = await loadDashboard();
+    } catch (err) {
+      this.dashboardError = String(err);
+    } finally {
+      this.dashboardLoading = false;
+    }
+  }
+
+  async createDashboardTask(title: string, description?: string, assignee?: string) {
+    const { createTask } = await import("./controllers/dashboard.js");
+    const task = await createTask(title, description, assignee);
+    if (task) await this.loadDashboard();
+  }
+
+  async updateDashboardTask(id: string, updates: Partial<import("./views/dashboard.js").DashboardTask>) {
+    const { updateTask } = await import("./controllers/dashboard.js");
+    const task = await updateTask(id, updates);
+    if (task) await this.loadDashboard();
+  }
+
+  async deleteDashboardTask(id: string) {
+    const { deleteTask } = await import("./controllers/dashboard.js");
+    const ok = await deleteTask(id);
+    if (ok) await this.loadDashboard();
+  }
+
+  async createDashboardProject(name: string, description?: string) {
+    const { createProject } = await import("./controllers/dashboard.js");
+    const project = await createProject(name, description);
+    if (project) await this.loadDashboard();
   }
 
   async loadCron() {

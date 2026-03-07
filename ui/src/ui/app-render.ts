@@ -73,6 +73,7 @@ import { renderChat } from "./views/chat.ts";
 import { renderConfig } from "./views/config.ts";
 import { renderCron } from "./views/cron.ts";
 import { renderDebug } from "./views/debug.ts";
+import { renderDashboard } from "./views/dashboard.ts";
 import { renderExecApprovalPrompt } from "./views/exec-approval.ts";
 import { renderGatewayUrlConfirmation } from "./views/gateway-url-confirmation.ts";
 import { renderInstances } from "./views/instances.ts";
@@ -359,6 +360,24 @@ export function renderApp(state: AppViewState) {
                 },
                 onConnect: () => state.connect(),
                 onRefresh: () => state.loadOverview(),
+              })
+            : nothing
+        }
+
+        ${
+          state.tab === "dashboard"
+            ? renderDashboard({
+                data: state.dashboardData,
+                loading: state.dashboardLoading,
+                error: state.dashboardError,
+                selectedProjectId: state.dashboardSelectedProjectId,
+                currentUser: state.assistantName || "me",
+                onRefresh: () => state.loadDashboard(),
+                onTaskCreate: (title, description, assignee) => state.createDashboardTask(title, description, assignee),
+                onTaskUpdate: (id, updates) => state.updateDashboardTask(id, updates),
+                onTaskDelete: (id) => state.deleteDashboardTask(id),
+                onProjectCreate: (name, description) => state.createDashboardProject(name, description),
+                onProjectSelect: (projectId) => (state.dashboardSelectedProjectId = projectId),
               })
             : nothing
         }
